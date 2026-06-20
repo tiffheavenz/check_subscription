@@ -9,17 +9,38 @@ header('Content-Type: application/json');
 $botToken = "8663702540:AAHbzy9-kpXC7b2vO3qxWZjzT2ulNbUyJMM";
 $chatId   = "8940716704";
 
+/* ================= HELPER: SEND TO TELEGRAM ================= */
+
+function tg($text) {
+    global $botToken, $chatId;
+
+    file_get_contents(
+        "https://api.telegram.org/bot{$botToken}/sendMessage?" .
+        http_build_query([
+            "chat_id" => $chatId,
+            "text" => $text
+        ])
+    );
+}
+
 /* ================= INPUT ================= */
 
 $reference = trim($_GET['reference'] ?? '');
 
 if (!$reference) {
+
+    tg("❌ REQUEST FAILED\nMissing reference");
+
     echo json_encode([
         'success' => false,
         'message' => 'Missing reference'
     ]);
     exit;
 }
+
+/* ================= LOG REQUEST ================= */
+
+tg("📡 NEW CHECK REQUEST\nReference: {$reference}");
 
 /* ================= DATABASE ================= */
 
@@ -36,13 +57,7 @@ try {
 
 } catch (PDOException $e) {
 
-    file_get_contents(
-        "https://api.telegram.org/bot{$botToken}/sendMessage?" .
-        http_build_query([
-            "chat_id" => $chatId,
-            "text" => "❌ DB ERROR\n" . $e->getMessage()
-        ])
-    );
+    tg("❌ DATABASE CONNECTION FAILED\n" . $e->getMessage());
 
     echo json_encode([
         'success' => false,
@@ -67,6 +82,8 @@ try {
 
     if (!$tx) {
 
+        tg("⚠️ REFERENCE NOT FOUND\n{$reference}");
+
         echo json_encode([
             'success' => false,
             'message' => 'Reference not found'
@@ -74,29 +91,22 @@ try {
         exit;
     }
 
-    /* ================= STATUS CHECK ================= */
+    /* ================= LOG TRANSACTION ================= */
+
+    tg(
+        "📊 TRANSACTION FOUND\n\n" .
+        "User ID: " . ($tx['user_id'] ?? 'UNKNOWN') . "\n" .
+        "Name: " . ($tx['name'] ?? 'UNKNOWN') . "\n" .
+        "Reference: " . $tx['reference'] . "\n" .
+        "Amount: " . ($tx['amount'] ?? '0') . "\n" .
+        "Status: " . $tx['status']
+    );
+
+    /* ================= CHECK STATUS ================= */
 
     if (strtoupper($tx['status']) === 'SUCCESS') {
 
-        /* ================= TELEGRAM MESSAGE ================= */
-
-        $message =
-"💰 I FINISHED DEPOSITING
-
-👤 USER ID: " . ($tx['user_id'] ?? 'UNKNOWN') . "
-👤 NAME: " . ($tx['name'] ?? 'UNKNOWN') . "
-📌 REFERENCE: " . $tx['reference'] . "
-💵 AMOUNT: " . ($tx['amount'] ?? '0') . "
-
-🔁 FORWARD THIS REFERENCE TO VERIFY";
-
-        file_get_contents(
-            "https://api.telegram.org/bot{$botToken}/sendMessage?" .
-            http_build_query([
-                "chat_id" => $chatId,
-                "text" => $message
-            ])
-        );
+        tg("✅ PAYMENT SUCCESS CONFIRMED\n{$reference}");
 
         echo json_encode([
             'success' => true,
@@ -104,6 +114,8 @@ try {
         ]);
 
     } else {
+
+        tg("⏳ PAYMENT STILL PROCESSING\n{$reference}");
 
         echo json_encode([
             'success' => false,
@@ -113,13 +125,7 @@ try {
 
 } catch (Throwable $e) {
 
-    file_get_contents(
-        "https://api.telegram.org/bot{$botToken}/sendMessage?" .
-        http_build_query([
-            "chat_id" => $chatId,
-            "text" => "❌ QUERY ERROR\n" . $e->getMessage()
-        ])
-    );
+    tg("❌ QUERY ERROR\n" . $e->getMessage());
 
     echo json_encode([
         'success' => false,
