@@ -17,31 +17,26 @@ if (!$reference) {
     exit;
 }
 
-/* ================= SUPABASE CONNECTION ================= */
+/* ================= SUPABASE CONNECTION (MATCH YOUR WORKING ONE) ================= */
 
 try {
 
-    $host = "aws-0-eu-west-3.pooler.supabase.com";
-    $port = "5432";
-    $db   = "postgres";
+    $pdo = new PDO(
+        "pgsql:host=aws-0-eu-west-3.pooler.supabase.com;port=5432;dbname=postgres",
+        "postgres.lxsddkbtbynekazmdsbh",
+        "@Shjeeee2024",
+        [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_TIMEOUT => 10
+        ]
+    );
 
-    $user = "postgres.lxsddkbtbynekazmdsbh";
-    $pass = "YOUR_SUPABASE_DB_PASSWORD"; // replace this
-
-    $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
-
-    $supabase = new PDO($dsn, $user, $pass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_TIMEOUT => 10
-    ]);
-
-} catch (Throwable $e) {
-
-    error_log("Supabase connection failed: " . $e->getMessage());
+} catch (PDOException $e) {
 
     echo json_encode([
         'success' => false,
-        'message' => 'Database connection failed'
+        'message' => 'Database connection failed',
+        'debug' => $e->getMessage()
     ]);
     exit;
 }
@@ -50,7 +45,7 @@ try {
 
 try {
 
-    $stmt = $supabase->prepare("
+    $stmt = $pdo->prepare("
         SELECT status
         FROM transactions
         WHERE reference = ?
@@ -61,7 +56,6 @@ try {
     $tx = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$tx) {
-
         echo json_encode([
             'success' => false,
             'message' => 'Reference not found'
@@ -75,7 +69,6 @@ try {
             'success' => true,
             'message' => 'Payment successful'
         ]);
-        exit;
 
     } else {
 
@@ -83,16 +76,13 @@ try {
             'success' => false,
             'message' => 'Payment not successful'
         ]);
-        exit;
     }
 
 } catch (Throwable $e) {
 
-    error_log("Transaction check failed: " . $e->getMessage());
-
     echo json_encode([
         'success' => false,
-        'message' => 'Transaction check error'
+        'message' => 'Query error',
+        'debug' => $e->getMessage()
     ]);
-    exit;
 }
