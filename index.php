@@ -9,7 +9,7 @@ header('Content-Type: application/json');
 
 $reference = $_GET['reference'] ?? '';
 
-if (empty($reference)) {
+if (!$reference) {
     echo json_encode([
         'success' => false,
         'message' => 'Missing reference'
@@ -26,7 +26,7 @@ try {
     $db   = "postgres";
 
     $user = "postgres.lxsddkbtbynekazmdsbh";
-    $pass = "YOUR_SUPABASE_DB_PASSWORD";
+    $pass = "YOUR_SUPABASE_DB_PASSWORD"; // replace this
 
     $dsn = "pgsql:host=$host;port=$port;dbname=$db;sslmode=require";
 
@@ -60,9 +60,8 @@ try {
     $stmt->execute([$reference]);
     $tx = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    /* ================= NOT FOUND ================= */
-
     if (!$tx) {
+
         echo json_encode([
             'success' => false,
             'message' => 'Reference not found'
@@ -70,14 +69,13 @@ try {
         exit;
     }
 
-    /* ================= CHECK STATUS ================= */
-
     if (strtoupper($tx['status']) === 'SUCCESS') {
 
         echo json_encode([
             'success' => true,
             'message' => 'Payment successful'
         ]);
+        exit;
 
     } else {
 
@@ -85,6 +83,7 @@ try {
             'success' => false,
             'message' => 'Payment not successful'
         ]);
+        exit;
     }
 
 } catch (Throwable $e) {
@@ -95,4 +94,5 @@ try {
         'success' => false,
         'message' => 'Transaction check error'
     ]);
+    exit;
 }
