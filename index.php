@@ -42,14 +42,14 @@ if (!$reference) {
 
 tg("📡 NEW CHECK REQUEST\nReference: {$reference}");
 
-/* ================= DATABASE ================= */
+/* ================= NEON DATABASE ================= */
 
 try {
 
     $pdo = new PDO(
-        "pgsql:host=aws-0-eu-west-3.pooler.supabase.com;port=5432;dbname=postgres",
-        "postgres.lxsddkbtbynekazmdsbh",
-        "@Shjeeee2024",
+        "pgsql:host=ep-blue-sound-ayd48i6r.c-5.us-east-2.aws.neon.tech;port=5432;dbname=neondb;sslmode=require",
+        "neondb_owner",
+        "YOUR_NEON_PASSWORD",
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]
@@ -57,7 +57,7 @@ try {
 
 } catch (PDOException $e) {
 
-    tg("❌ DATABASE CONNECTION FAILED\n" . $e->getMessage());
+    tg("❌ NEON DATABASE CONNECTION FAILED\n" . $e->getMessage());
 
     echo json_encode([
         'success' => false,
@@ -65,7 +65,6 @@ try {
     ]);
     exit;
 }
-
 /* ================= FETCH TRANSACTION ================= */
 
 try {
