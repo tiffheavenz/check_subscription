@@ -49,7 +49,7 @@ try {
     $pdo = new PDO(
         "pgsql:host=ep-blue-sound-ayd48i6r.c-5.us-east-2.aws.neon.tech;port=5432;dbname=neondb;sslmode=require",
         "neondb_owner",
-        "YOUR_NEON_PASSWORD",
+        "npg_v5ZXNhkD7Han",
         [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
         ]
